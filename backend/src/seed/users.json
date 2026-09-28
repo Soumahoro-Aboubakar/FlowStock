@@ -1,0 +1,10 @@
+[
+  { "id": "u0", "name": "Amina Diallo", "email": "amina.diallo@nexa.io", "role": "Administratrice", "team": "Opérations", "joined": "Janvier 2021" },
+  { "id": "u1", "name": "Sarah Lefevre", "email": "sarah.lefevre@nexa.io", "role": "Employée", "team": "Marketing", "joined": "Mars 2022" },
+  { "id": "u2", "name": "Karim Benali", "email": "karim.benali@nexa.io", "role": "Employé", "team": "Design", "joined": "Juin 2022" },
+  { "id": "u3", "name": "Emma Ricard", "email": "emma.ricard@nexa.io", "role": "Employée", "team": "Ingénierie", "joined": "Sept. 2021" },
+  { "id": "u4", "name": "Thomas Noir", "email": "thomas.noir@nexa.io", "role": "Employé", "team": "Ventes", "joined": "Nov. 2022" },
+  { "id": "u5", "name": "Léa Fontaine", "email": "lea.fontaine@nexa.io", "role": "Employée", "team": "Ressources hum.", "joined": "Février 2023" },
+  { "id": "u6", "name": "Alex Martin", "email": "alex.martin@nexa.io", "role": "Employé", "team": "Design", "joined": "Mai 2023" },
+  { "id": "u7", "name": "Marc Aubry", "email": "marc.aubry@nexa.io", "role": "Employé", "team": "Support", "joined": "Août 2022" }
+]

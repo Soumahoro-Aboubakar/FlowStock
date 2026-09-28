@@ -1,0 +1,41 @@
+export class ApiError extends Error {
+  constructor(status, message, code, details) {
+    super(message)
+    this.status = status
+    this.code = code
+    this.details = details || {}
+  }
+
+  get fields() {
+    return this.details.fields || {}
+  }
+}
+
+let sessionExpiredHandler = null
+export const onSessionExpired = (handler) => { sessionExpiredHandler = handler }
+
+export async function api(path, { method = 'GET', body, signal } = {}) {
+  let response
+  try {
+    response = await fetch(`/api${path}`, {
+      method,
+      signal,
+      credentials: 'same-origin',
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch (error) {
+    if (error.name === 'AbortError') throw error
+    throw new ApiError(0, 'Serveur injoignable. Vérifiez votre connexion puis réessayez.', 'NETWORK')
+  }
+
+  if (response.status === 204) return null
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    const error = new ApiError(response.status, data?.message || 'Une erreur inattendue est survenue.', data?.code, data?.details)
+    // A 401 outside of the auth endpoints means the session is gone (expired, revoked, logged out elsewhere).
+    if (response.status === 401 && !path.startsWith('/auth/') && sessionExpiredHandler) sessionExpiredHandler(error)
+    throw error
+  }
+  return data
+}
