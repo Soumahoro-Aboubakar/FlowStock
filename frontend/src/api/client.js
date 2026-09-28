@@ -18,6 +18,11 @@ export function apiUrl(path) {
   return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+// Uploaded images are served by the API as relative /media/... paths; they must point at the API origin.
+export function mediaUrl(url) {
+  return url && url.startsWith('/media/') ? apiUrl(url) : url
+}
+
 let sessionExpiredHandler = null
 export const onSessionExpired = (handler) => { sessionExpiredHandler = handler }
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Button, Input, Select, Field, StockBadge, ImageDropzone, Modal, useToast } from '../../../components/ui/Kit.jsx'
+import { mediaUrl } from '../../../api/client.js'
 import { validateImageFile, readImageDimensions, uploadMaterialImage, discardUploadedImage, fmtFileSize } from '../../../services/materialImages.js'
 
 export function MaterialFormModal({ open, material, onClose, app }) {
@@ -92,7 +93,7 @@ export function MaterialFormModal({ open, material, onClose, app }) {
       <div className="space-y-4">
         <Field label="Image du matériel" required={!editing} error={imageError || errors.image} hint={imageHint}>
           <ImageDropzone
-            previewUrl={picked ? picked.url : currentImage ? currentImage.url : null}
+            previewUrl={picked ? picked.url : currentImage ? mediaUrl(currentImage.url) : null}
             badge={picked ? (currentImage ? 'Nouvelle image' : 'Aperçu') : 'Image actuelle'}
             fileInfo={picked ? { name: picked.file.name, meta: `${picked.width} × ${picked.height} px · ${fmtFileSize(picked.file.size)}` } : null}
             onSelect={pickImage}
