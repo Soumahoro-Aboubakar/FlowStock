@@ -36,6 +36,12 @@ export const env = {
     pass: process.env.SMTP_PASS,
     from: process.env.MAIL_FROM || process.env.SMTP_USER,
   },
+  // Google Apps Script relay (backend/scripts/gmail-relay.gs) sending from Gmail over HTTPS:
+  // Render's free instances block outbound SMTP ports (25, 465, 587).
+  mailRelay: {
+    url: process.env.MAIL_RELAY_URL,
+    secret: process.env.MAIL_RELAY_SECRET,
+  },
   r2: {
     accountId: process.env.R2_ACCOUNT_ID,
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
@@ -48,6 +54,8 @@ export const env = {
 };
 
 export const smtpConfigured = Boolean(env.smtp.host && env.smtp.user && env.smtp.pass);
+export const relayConfigured = Boolean(env.mailRelay.url && env.mailRelay.secret);
+export const mailConfigured = relayConfigured || smtpConfigured;
 export const r2Configured = Boolean(env.r2.accessKeyId && env.r2.secretAccessKey && env.r2.bucket && (env.r2.accountId || env.r2.endpoint));
 
 // "<account>.r2.cloudflarestorage.com" is the private S3 API endpoint: it rejects unsigned requests,
@@ -69,6 +77,6 @@ export const r2PublicUrlRejected = Boolean(r2Configured && env.r2.publicUrl && !
 export function assertEnv() {
   if (!env.mongodbUri) throw new Error('MONGODB_URI is required.');
   if (!env.jwtSecret || env.jwtSecret.length < 32) throw new Error('JWT_SECRET must be set to a random string of at least 32 characters.');
-  if (isProduction && !smtpConfigured) throw new Error('SMTP settings are required in production.');
+  if (isProduction && !mailConfigured) throw new Error('Email settings (MAIL_RELAY_URL + MAIL_RELAY_SECRET, or SMTP) are required in production.');
   if (isProduction && !r2Configured) throw new Error('Cloudflare R2 settings are required in production.');
 }
