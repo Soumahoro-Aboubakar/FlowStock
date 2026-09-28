@@ -30,7 +30,13 @@ export async function api(path, { method = 'GET', body, signal } = {}) {
   }
 
   if (response.status === 204) return null
-  const data = await response.json().catch(() => null)
+  const isJson = (response.headers.get('content-type') || '').includes('application/json')
+  const data = isJson ? await response.json().catch(() => null) : null
+  // A non-JSON answer means the request never reached the API (e.g. the static host served index.html
+  // because /api is not proxied to the backend): fail loudly instead of returning null to the caller.
+  if (response.ok && !isJson) {
+    throw new ApiError(502, "L'API est injoignable depuis ce site. Vérifiez la redirection /api vers le serveur.", 'API_UNREACHABLE')
+  }
   if (!response.ok) {
     const error = new ApiError(response.status, data?.message || 'Une erreur inattendue est survenue.', data?.code, data?.details)
     // A 401 outside of the auth endpoints means the session is gone (expired, revoked, logged out elsewhere).

@@ -12,7 +12,8 @@ export const env = {
   isProduction,
   port: int(process.env.PORT, 5000),
   mongodbUri: process.env.MONGODB_URI,
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  // Compared verbatim with the Origin header, so a trailing slash from the dashboard would reject every request.
+  clientUrl: (process.env.CLIENT_URL || 'http://localhost:5173').trim().replace(/\/+$/, ''),
   jwtSecret: process.env.JWT_SECRET,
   sessionTtlDays: int(process.env.SESSION_TTL_DAYS, 7),
   adminEmails: list(process.env.ADMIN_EMAILS),
