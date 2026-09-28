@@ -14,6 +14,9 @@ export const env = {
   mongodbUri: process.env.MONGODB_URI,
   // Compared verbatim with the Origin header, so a trailing slash from the dashboard would reject every request.
   clientUrl: (process.env.CLIENT_URL || 'http://localhost:5173').trim().replace(/\/+$/, ''),
+  // An https frontend on another host (e.g. flowstock-1.onrender.com calling flowstock-oh7l.onrender.com) is
+  // cross-site: onrender.com is a public suffix, so a SameSite=Lax cookie would never come back to the API.
+  crossSiteClient: /^https:\/\//i.test(process.env.CLIENT_URL || ''),
   jwtSecret: process.env.JWT_SECRET,
   sessionTtlDays: int(process.env.SESSION_TTL_DAYS, 7),
   adminEmails: list(process.env.ADMIN_EMAILS),

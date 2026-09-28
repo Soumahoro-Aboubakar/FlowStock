@@ -5,8 +5,9 @@ export const SESSION_COOKIE = 'fs_session';
 
 const cookieOptions = () => ({
   httpOnly: true,
-  secure: env.isProduction,
-  sameSite: 'lax',
+  // SameSite=None requires Secure; CSRF stays covered by the Origin check in requireSameOrigin.
+  secure: env.isProduction || env.crossSiteClient,
+  sameSite: env.crossSiteClient ? 'none' : 'lax',
   path: '/',
 });
 

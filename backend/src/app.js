@@ -30,8 +30,10 @@ export function createApp() {
   app.use('/api/employee', employeeRoutes);
 
   // Uploaded images (private R2 bucket or local disk), and the legacy path of older local uploads.
-  app.use('/media', mediaRoutes);
-  app.use('/uploads', express.static(UPLOAD_ROOT, {
+  // The frontend may live on another site, so its <img> tags need a cross-origin resource policy.
+  const crossOriginImages = (_request, response, next) => { response.set('Cross-Origin-Resource-Policy', 'cross-origin'); next(); };
+  app.use('/media', crossOriginImages, mediaRoutes);
+  app.use('/uploads', crossOriginImages, express.static(UPLOAD_ROOT, {
     index: false,
     maxAge: '30d',
     immutable: true,
