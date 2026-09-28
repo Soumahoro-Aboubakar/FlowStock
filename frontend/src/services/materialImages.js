@@ -1,3 +1,5 @@
+import { apiUrl } from '../api/client.js'
+
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
@@ -33,7 +35,8 @@ export function uploadMaterialImage(file, { onProgress, signal } = {}) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     const fail = (status) => reject(Object.assign(new Error(UPLOAD_ERRORS[status] || "Le téléversement de l'image a échoué. Réessayez dans un instant."), { status }))
-    xhr.open('POST', '/api/admin/uploads/materials')
+    xhr.open('POST', apiUrl('/api/admin/uploads/materials'))
+    xhr.withCredentials = true
     xhr.setRequestHeader('Content-Type', file.type)
     xhr.responseType = 'json'
     xhr.upload.onprogress = (event) => { if (event.lengthComputable && onProgress) onProgress(Math.round((event.loaded / event.total) * 100)) }
@@ -53,5 +56,5 @@ export function uploadMaterialImage(file, { onProgress, signal } = {}) {
 // to delete an image still referenced by a material; replaced images are cleaned up server-side.
 export function discardUploadedImage(image) {
   if (!image || !image.publicId) return Promise.resolve()
-  return fetch(`/api/admin/uploads/${image.publicId}`, { method: 'DELETE', credentials: 'same-origin' }).catch(() => {})
+  return fetch(apiUrl(`/api/admin/uploads/${image.publicId}`), { method: 'DELETE', credentials: 'include' }).catch(() => {})
 }

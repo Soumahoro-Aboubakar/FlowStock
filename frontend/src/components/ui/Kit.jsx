@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx, fmtDate, fmtDateTime, norm, timeAgo, STATUS_META, STOCK_META, CATEGORIES, stockLevel, isAdminUser, roleLabel, initials, cap } from '../../utils/formatters.js'
 import { Icon } from './icons.jsx'
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, fmtFileSize } from '../../services/materialImages.js'
+import { apiUrl } from '../../api/client.js'
 
 export function Button({ variant = 'primary', size = 'md', icon, iconRight, loading = false, loadingLabel = 'Traitement en cours', className, children, disabled, ...props }) {
   const base = 'inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-[.98] disabled:opacity-45 disabled:pointer-events-none select-none'
@@ -178,7 +179,8 @@ function ImageFallback({ category, compact, iconSize }) {
 
 // Renders a material's image with a shimmer while loading and a category fallback when it is missing or broken.
 export function MaterialImage({ material, compact = false, iconSize = 24, className, imgClassName, style }) {
-  const url = material && material.image ? material.image.url : null
+  const imageUrl = material && material.image ? material.image.url : null
+  const url = imageUrl && imageUrl.startsWith('/media/') ? apiUrl(imageUrl) : imageUrl
   const [loadedUrl, setLoadedUrl] = useState(null)
   const [failedUrl, setFailedUrl] = useState(null)
   const missing = !url || failedUrl === url

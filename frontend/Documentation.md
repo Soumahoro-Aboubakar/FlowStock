@@ -45,7 +45,7 @@ npm --prefix frontend run build
 npm --prefix frontend run preview
 ```
 
-Le frontend ne déclare pas de variable `VITE_*` ni de fichier `.env` frontend pour configurer l’URL d’API : les requêtes utilisent des chemins relatifs `/api/...` et le proxy de développement est fixé dans la configuration Vite. Pour un autre déploiement, le routage/proxy HTTP doit donc être configuré hors de ce proxy de développement.
+Le client utilise `VITE_API_URL` comme origine de l’API en production; pour le déploiement Render actuel, il retombe par défaut sur `https://flowstock-oh7l.onrender.com`. Cette variable peut être définie dans l’environnement du site statique pour remplacer cette origine (puis lancer un nouveau build). Elle est injectée lors du build Vite et ne doit contenir aucun secret. En développement local, en l’absence de variable, les appels restent relatifs et le proxy Vite les transmet à `http://localhost:5000`. Le backend doit autoriser l’origine publique exacte du frontend dans `CLIENT_URL` et CORS.
 
 ## 4. Architecture du code
 
