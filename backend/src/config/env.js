@@ -17,6 +17,9 @@ export const env = {
   // An https frontend on another host (e.g. flowstock-1.onrender.com calling flowstock-oh7l.onrender.com) is
   // cross-site: onrender.com is a public suffix, so a SameSite=Lax cookie would never come back to the API.
   crossSiteClient: /^https:\/\//i.test(process.env.CLIENT_URL || ''),
+  // Test mode: no verification email is sent, the code is returned to the app and shown on screen.
+  // Set SHOW_VERIFICATION_CODE=false to send it by email again (relay or SMTP settings below).
+  showVerificationCode: !isProduction && process.env.SHOW_VERIFICATION_CODE !== 'false',
   jwtSecret: process.env.JWT_SECRET,
   sessionTtlDays: int(process.env.SESSION_TTL_DAYS, 7),
   adminEmails: list(process.env.ADMIN_EMAILS),
@@ -77,6 +80,6 @@ export const r2PublicUrlRejected = Boolean(r2Configured && env.r2.publicUrl && !
 export function assertEnv() {
   if (!env.mongodbUri) throw new Error('MONGODB_URI is required.');
   if (!env.jwtSecret || env.jwtSecret.length < 32) throw new Error('JWT_SECRET must be set to a random string of at least 32 characters.');
-  if (isProduction && !mailConfigured) throw new Error('Email settings (MAIL_RELAY_URL + MAIL_RELAY_SECRET, or SMTP) are required in production.');
+  if (isProduction && !mailConfigured && !env.showVerificationCode) throw new Error('Email settings (MAIL_RELAY_URL + MAIL_RELAY_SECRET, or SMTP) are required in production.');
   if (isProduction && !r2Configured) throw new Error('Cloudflare R2 settings are required in production.');
 }

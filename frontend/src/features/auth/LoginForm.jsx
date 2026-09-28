@@ -43,8 +43,8 @@ export function LoginForm({ initialEmail = '', onSignedIn, onNeedsVerification, 
         setLock(error.details)
         toast.error('Compte temporairement verrouillé', { description: error.message })
       } else if (error.code === 'EMAIL_NOT_VERIFIED') {
-        toast.info('Vérifiez votre adresse e-mail', { description: 'Un code de confirmation vient de vous être envoyé.' })
-        onNeedsVerification({ email: error.details.email, resendAvailableAt: error.details.resendAvailableAt })
+        toast.info('Vérifiez votre adresse e-mail', { description: error.details.code ? 'Confirmez votre compte avec le code affiché.' : 'Un code de confirmation vient de vous être envoyé.' })
+        onNeedsVerification({ email: error.details.email, resendAvailableAt: error.details.resendAvailableAt, code: error.details.code })
       } else if (error.fields && Object.keys(error.fields).length) {
         setErrors(error.fields)
       } else {

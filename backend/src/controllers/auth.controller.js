@@ -20,9 +20,13 @@ const lockedError = (lockedUntil) => new HttpError(429,
   `Trop de tentatives de connexion. Réessayez dans ${lockInfo(lockedUntil).retryInHours} heure${lockInfo(lockedUntil).retryInHours > 1 ? 's' : ''}.`,
   { code: 'ACCOUNT_LOCKED', details: lockInfo(lockedUntil) });
 
-// Issues a fresh 6-digit code unless one was sent during the cooldown window; returns when the next resend is allowed.
+// Issues a fresh 6-digit code unless one was sent during the cooldown window. Returns when the next resend is
+// allowed and, in test mode (env.showVerificationCode), the code itself instead of emailing it.
 async function sendVerificationCode(user, { force = false } = {}) {
-  if (!force && user.verification && Date.now() < resendAvailableAt(user.verification)) return resendAvailableAt(user.verification);
+  // Only the hash is stored, so test mode always issues a new code it can hand back.
+  if (!force && !env.showVerificationCode && user.verification && Date.now() < resendAvailableAt(user.verification)) {
+    return { resendAvailableAt: resendAvailableAt(user.verification) };
+  }
 
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   const now = new Date();
@@ -34,13 +38,15 @@ async function sendVerificationCode(user, { force = false } = {}) {
   };
   await user.save();
 
+  if (env.showVerificationCode) return { resendAvailableAt: resendAvailableAt(user.verification), code };
+
   try {
     await sendMail({ to: user.email, ...verificationEmail({ name: user.name, code }) });
   } catch (error) {
     console.error('Verification email failed:', error.message);
     throw new HttpError(502, "Impossible d'envoyer l'e-mail de vérification pour le moment. Réessayez dans un instant.", { code: 'MAIL_FAILED' });
   }
-  return resendAvailableAt(user.verification);
+  return { resendAvailableAt: resendAvailableAt(user.verification) };
 }
 
 export async function signup(request, response) {
@@ -58,8 +64,8 @@ export async function signup(request, response) {
   user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
   user.status = 'pending';
 
-  const nextResendAt = await sendVerificationCode(user, { force: true });
-  response.status(201).json({ email: user.email, resendAvailableAt: nextResendAt, codeTtlMinutes: env.verification.codeTtlMinutes });
+  const issued = await sendVerificationCode(user, { force: true });
+  response.status(201).json({ email: user.email, ...issued, codeTtlMinutes: env.verification.codeTtlMinutes });
 }
 
 export async function verifyEmail(request, response) {
@@ -104,8 +110,8 @@ export async function resendCode(request, response) {
     const seconds = Math.ceil((availableAt - Date.now()) / 1000);
     throw new HttpError(429, `Patientez ${seconds} s avant de demander un nouveau code.`, { code: 'RESEND_COOLDOWN', details: { resendAvailableAt: availableAt } });
   }
-  const nextResendAt = await sendVerificationCode(user, { force: true });
-  response.status(202).json({ resendAvailableAt: nextResendAt });
+  const issued = await sendVerificationCode(user, { force: true });
+  response.status(202).json(issued);
 }
 
 export async function login(request, response) {
@@ -128,9 +134,9 @@ export async function login(request, response) {
   await clearFailures(email);
 
   if (user.status !== 'active') {
-    const nextResendAt = await sendVerificationCode(user);
+    const issued = await sendVerificationCode(user);
     throw new HttpError(403, 'Confirmez votre adresse e-mail pour vous connecter. Un code vous a été envoyé.', {
-      code: 'EMAIL_NOT_VERIFIED', details: { email: user.email, resendAvailableAt: nextResendAt },
+      code: 'EMAIL_NOT_VERIFIED', details: { email: user.email, ...issued },
     });
   }
 

@@ -4,12 +4,34 @@ import { Icon } from '../../components/ui/icons.jsx'
 import { Spinner, useToast } from '../../components/ui/Kit.jsx'
 import { AuthButton, AuthHeading, InlineSpinner, OtpInput, StepIndicator, TextLink, useResendCountdown } from './parts.jsx'
 
-export function VerifyEmailForm({ email, resendAvailableAt: initialResendAt, onVerified, onBack }) {
+// Test mode: the API returns the code instead of emailing it, so it is shown here to copy.
+function TestCodeBanner({ code, onUse }) {
+  const toast = useToast()
+  const copy = () => {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).catch(() => {})
+    onUse(code)
+    toast.success('Code copié', { description: 'Il a aussi été saisi pour vous.' })
+  }
+  return (
+    <div role="status" className="anim-scale-in mb-6 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800/80">Mode test · votre code</p>
+        <p className="tnum mt-0.5 font-mono text-2xl font-bold tracking-[0.3em] text-amber-950 select-all">{code}</p>
+      </div>
+      <button type="button" onClick={copy} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[13px] font-semibold text-amber-900 shadow-card ring-1 ring-amber-200 transition hover:bg-amber-100/60">
+        <Icon name="copy" size={14} />Copier
+      </button>
+    </div>
+  )
+}
+
+export function VerifyEmailForm({ email, resendAvailableAt: initialResendAt, testCode: initialTestCode, onVerified, onBack }) {
   const toast = useToast()
   const [code, setCode] = useState('')
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState(null)
   const [resendAt, setResendAt] = useState(initialResendAt)
+  const [testCode, setTestCode] = useState(initialTestCode)
   const [resending, setResending] = useState(false)
   const inFlight = useRef(false)
   const secondsLeft = useResendCountdown(resendAt)
@@ -40,10 +62,11 @@ export function VerifyEmailForm({ email, resendAvailableAt: initialResendAt, onV
     try {
       const result = await authApi.resendCode(email)
       setResendAt(result.resendAvailableAt)
+      if (result.code) setTestCode(result.code)
       setStatus('idle')
       setMessage(null)
       setCode('')
-      toast.success('Nouveau code envoyé', { description: `Un nouveau code a été envoyé à ${email}.` })
+      toast.success(result.code ? 'Nouveau code généré' : 'Nouveau code envoyé', { description: result.code ? 'Il est affiché en haut de l’écran.' : `Un nouveau code a été envoyé à ${email}.` })
     } catch (error) {
       if (error.details?.resendAvailableAt) setResendAt(error.details.resendAvailableAt)
       toast.error('Envoi impossible', { description: error.message })
@@ -55,10 +78,11 @@ export function VerifyEmailForm({ email, resendAvailableAt: initialResendAt, onV
   const success = status === 'success'
   return (
     <div className="auth-reveal">
+      {testCode && !success && <TestCodeBanner code={testCode} onUse={(value) => { setCode(value); verify(value) }} />}
       <StepIndicator step={2} label={success ? 'Compte activé' : 'Vérification de l’e-mail'} />
       <AuthHeading
         title={success ? 'Adresse confirmée' : 'Vérifiez votre e-mail'}
-        subtitle={success ? 'Votre compte est actif. Ouverture de votre espace…' : <>Saisissez le code à 6 chiffres envoyé à <span className="font-medium text-slate-900">{email}</span>. Il expire dans 15 minutes.</>}
+        subtitle={success ? 'Votre compte est actif. Ouverture de votre espace…' : testCode ? <>Saisissez le code à 6 chiffres affiché ci-dessus pour confirmer <span className="font-medium text-slate-900">{email}</span>. Il expire dans 15 minutes.</> : <>Saisissez le code à 6 chiffres envoyé à <span className="font-medium text-slate-900">{email}</span>. Il expire dans 15 minutes.</>}
       />
 
       <form noValidate onSubmit={(event) => { event.preventDefault(); verify(code) }} className="mt-8">
@@ -76,7 +100,7 @@ export function VerifyEmailForm({ email, resendAvailableAt: initialResendAt, onV
 
       <div className="mt-8 border-t border-slate-100 pt-6 text-[13px] text-slate-500">
         <div className="flex items-center justify-between gap-4">
-          <p>Rien reçu ? Vérifiez vos spams.</p>
+          <p>{testCode ? 'Code expiré ?' : 'Rien reçu ? Vérifiez vos spams.'}</p>
           {secondsLeft > 0
             ? <span className="tnum shrink-0 text-slate-400">Renvoyer dans {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}</span>
             : <TextLink onClick={resend} disabled={resending || success} className="shrink-0 disabled:opacity-50">{resending ? <span className="inline-flex items-center gap-1.5"><Spinner size={11} />Envoi…</span> : 'Renvoyer le code'}</TextLink>}

@@ -113,7 +113,7 @@ export default function AuthScreen({ onAuthenticated }) {
     setState((current) => ({ ...current, view: nextView, email: nextEmail, invited: nextView === 'signup' ? current.invited && nextEmail === current.email : false }))
     if (window.location.search) window.history.replaceState(null, '', window.location.pathname)
   }
-  const startVerification = ({ email: verifyEmail, resendAvailableAt }) => setState((current) => ({ ...current, view: 'verify', email: verifyEmail, verify: { resendAvailableAt } }))
+  const startVerification = ({ email: verifyEmail, resendAvailableAt, code }) => setState((current) => ({ ...current, view: 'verify', email: verifyEmail, verify: { resendAvailableAt, code } }))
 
   return (
     <div className="min-h-dvh bg-white lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] lg:p-2">
@@ -131,7 +131,7 @@ export default function AuthScreen({ onAuthenticated }) {
           <div key={view} className="w-full max-w-[380px]">
             {view === 'login' && <LoginForm initialEmail={email} onSignedIn={onAuthenticated} onNeedsVerification={startVerification} onSwitch={go} />}
             {view === 'signup' && <SignupForm initialEmail={email} emailLocked={invited} onCodeSent={startVerification} onSwitch={go} />}
-            {view === 'verify' && <VerifyEmailForm email={email} resendAvailableAt={verify?.resendAvailableAt} onVerified={onAuthenticated} onBack={() => go('signup', email)} />}
+            {view === 'verify' && <VerifyEmailForm email={email} resendAvailableAt={verify?.resendAvailableAt} testCode={verify?.code} onVerified={onAuthenticated} onBack={() => go('signup', email)} />}
           </div>
         </main>
 

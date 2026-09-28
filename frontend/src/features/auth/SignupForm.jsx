@@ -41,8 +41,8 @@ export function SignupForm({ initialEmail = '', emailLocked = false, onCodeSent,
     setLoading(true)
     try {
       const result = await authApi.signup({ name: form.name.trim(), email: form.email.trim(), team: form.team.trim(), password: form.password })
-      toast.success('Code de vérification envoyé', { description: `Consultez la boîte de réception de ${result.email}.` })
-      onCodeSent({ email: result.email, resendAvailableAt: result.resendAvailableAt })
+      if (!result.code) toast.success('Code de vérification envoyé', { description: `Consultez la boîte de réception de ${result.email}.` })
+      onCodeSent({ email: result.email, resendAvailableAt: result.resendAvailableAt, code: result.code })
     } catch (error) {
       if (error.code === 'EMAIL_TAKEN') {
         setErrors({ email: error.message })
